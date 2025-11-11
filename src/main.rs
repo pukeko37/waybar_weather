@@ -1,5 +1,5 @@
 //! Weather application with domain-driven design and type safety.
-//! Fetches weather data from wttr.in and outputs JSON for Waybar.
+//! Fetches weather data from WeatherAPI.com and outputs JSON for Waybar.
 
 mod api;
 mod display;

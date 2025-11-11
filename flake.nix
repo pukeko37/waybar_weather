@@ -1,5 +1,5 @@
 {
-  description = "Weather data fetcher for Waybar";
+  description = "Waybar weather widget - fetches data from WeatherAPI.com";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -25,14 +25,13 @@
           cargoLock = { lockFile = ./Cargo.lock; };
 
           meta = with pkgs.lib; {
-            description =
-              "Weather data fetcher for Waybar that replaces weather.sh";
+            description = "Waybar weather widget using WeatherAPI.com";
             longDescription = ''
-              A Rust implementation of a weather data fetcher that replaces the original
-              weather.sh script for Waybar. This executable fetches weather data from
-              wttr.in and outputs Waybar-compatible JSON format with comprehensive
-              weather information including temperature, humidity, wind, pressure,
-              sunrise/sunset times, and hourly forecasts.
+              A Rust-based weather data fetcher for Waybar that retrieves weather
+              information from WeatherAPI.com and outputs Waybar-compatible JSON format.
+              Provides comprehensive weather data including temperature, humidity, wind,
+              pressure, sunrise/sunset times, and hourly forecasts with type-safe domain
+              modeling and zero-cost abstractions.
             '';
             license = licenses.mit;
             maintainers = [ ];
@@ -47,10 +46,11 @@
           ];
 
           shellHook = ''
-            echo "Weather app development environment"
+            echo "waybar_weather development environment"
             echo "Rust toolchain: ${rustToolchain}"
             echo "Run 'cargo build' to build the project"
-            echo "Run 'cargo run -- Wellington' to test with Wellington weather"
+            echo "Run 'cargo run -- Wellington' to fetch Wellington weather"
+            echo "Set WEATHER_API_KEY environment variable before running"
           '';
         };
 

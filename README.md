@@ -1,6 +1,6 @@
 # waybar_weather - Waybar Weather Widget
 
-A Rust implementation of a weather data fetcher that replaces the original `weather.sh` script for Waybar. This executable fetches weather data from WeatherAPI.com and outputs Waybar-compatible JSON format.
+A Rust-based weather data fetcher for Waybar that retrieves weather information from WeatherAPI.com and outputs Waybar-compatible JSON format.
 
 ## Features
 
@@ -203,15 +203,14 @@ Common errors:
 - `anyhow` - Error handling with context
 - `urlencoding` - URL encoding for location names
 
-## Replacing the Shell Script
+## Waybar Configuration
 
-To replace the existing `weather.sh` in your Waybar configuration:
+To use waybar_weather in your Waybar setup:
 
 1. Get a free API key from WeatherAPI.com
-2. Build the release binary
-3. Copy or symlink the binary to your waybar-resources directory
-4. Set the `WEATHER_API_KEY` environment variable in your shell profile
-5. Update your Waybar configuration to use the new binary instead of `weather.sh`
+2. Build the release binary (or install via Nix)
+3. Set the `WEATHER_API_KEY` environment variable in your shell profile
+4. Configure your Waybar to use the binary
 
 Example Waybar config:
 ```json
@@ -274,15 +273,6 @@ WeatherAPI.com free tier provides:
 - Astronomy data
 
 This should be more than sufficient for personal use with Waybar updates every 30 minutes.
-
-## Migration from wttr.in
-
-This version has been migrated from wttr.in to WeatherAPI.com for better reliability and more comprehensive data. The main changes:
-
-- **Requires API key**: You need to sign up for a free account
-- **Better reliability**: Commercial API with better uptime
-- **More data fields**: Additional weather information available
-- **Same output format**: Drop-in replacement for existing Waybar configs
 
 ## Performance
 
