@@ -1,4 +1,4 @@
-# Weather - Waybar Weather Widget
+# waybar_weather - Waybar Weather Widget
 
 A Rust implementation of a weather data fetcher that replaces the original `weather.sh` script for Waybar. This executable fetches weather data from WeatherAPI.com and outputs Waybar-compatible JSON format.
 
@@ -29,13 +29,87 @@ You need a free API key from WeatherAPI.com:
 3. Get your API key from the dashboard
 4. Set the `WEATHER_API_KEY` environment variable
 
-## Building
+## Installation
+
+### For Nix Users
+
+This project provides a Nix flake for reproducible builds and easy integration with NixOS.
+
+#### Quick Start with Nix
+
+```bash
+# Run directly from GitHub
+nix run github:pukeko37/waybar_weather -- "Wellington"
+
+# Build locally
+nix build
+
+# The binary will be available at ./result/bin/waybar_weather
+./result/bin/waybar_weather "Auckland"
+```
+
+#### Add to NixOS Configuration
+
+Add this flake as an input in your NixOS configuration:
+
+```nix
+# flake.nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    waybar-weather.url = "github:pukeko37/waybar_weather";
+  };
+
+  outputs = { self, nixpkgs, waybar-weather, ... }: {
+    nixosConfigurations.yourhost = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        {
+          environment.systemPackages = [
+            waybar-weather.packages.x86_64-linux.default
+          ];
+        }
+      ];
+    };
+  };
+}
+```
+
+#### Use in Home Manager
+
+```nix
+# home.nix
+{ inputs, pkgs, ... }: {
+  home.packages = [
+    inputs.waybar-weather.packages.${pkgs.system}.default
+  ];
+
+  # Set API key
+  home.sessionVariables = {
+    WEATHER_API_KEY = "your_api_key_here";  # Or use a secret management solution
+  };
+}
+```
+
+#### Development Shell
+
+Enter a development environment with all required tools:
+
+```bash
+nix develop
+
+# Now you have cargo, rust-analyzer, and other tools available
+cargo build
+cargo test
+```
+
+### Building with Cargo
 
 ```bash
 cargo build --release
 ```
 
-The binary will be available at `target/release/weather`.
+The binary will be available at `target/release/waybar_weather`.
 
 ## Usage
 
@@ -49,12 +123,12 @@ Then run the program:
 
 ```bash
 # Default location (Wellington)
-./target/release/weather
+./target/release/waybar_weather
 
 # Custom location
-./target/release/weather "Auckland"
-./target/release/weather "London"
-./target/release/weather "New York"
+./target/release/waybar_weather "Auckland"
+./target/release/waybar_weather "London"
+./target/release/waybar_weather "New York"
 ```
 
 ## Environment Variables
@@ -123,11 +197,10 @@ Common errors:
 
 ## Dependencies
 
-- `reqwest` - HTTP client with rustls-tls for secure connections
+- `ureq` - Synchronous HTTP client with JSON support
 - `serde` and `serde_json` - JSON serialization/deserialization
-- `tokio` - Async runtime
-- `chrono` - Date and time handling
-- `anyhow` - Error handling
+- `time` - Date and time handling
+- `anyhow` - Error handling with context
 - `urlencoding` - URL encoding for location names
 
 ## Replacing the Shell Script
@@ -145,7 +218,19 @@ Example Waybar config:
 {
     "custom/weather": {
         "format": "{}",
-        "exec": "/path/to/weather/target/release/weather",
+        "exec": "/path/to/waybar_weather/target/release/waybar_weather",
+        "interval": 1800,
+        "return-type": "json"
+    }
+}
+```
+
+Or for Nix users with the package installed:
+```json
+{
+    "custom/weather": {
+        "format": "{}",
+        "exec": "waybar_weather Wellington",
         "interval": 1800,
         "return-type": "json"
     }
@@ -201,8 +286,9 @@ This version has been migrated from wttr.in to WeatherAPI.com for better reliabi
 
 ## Performance
 
-- Binary size: ~5.6MB (release build)
+- Binary size: ~2.3MB (Cargo release build), ~2.6MB (Nix build with optimizations)
 - No caching mechanism (fetches fresh data each time)
 - 10-second timeout for API requests
-- Uses rustls instead of system OpenSSL for better portability
+- Synchronous HTTP client for simplicity and smaller binary size
 - Minimal memory usage and fast execution
+- Type-safe domain modeling with zero-cost abstractions
