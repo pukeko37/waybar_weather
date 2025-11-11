@@ -17,7 +17,7 @@
         rustToolchain = pkgs.rust-bin.stable.latest.default;
       in {
         packages.default = pkgs.rustPlatform.buildRustPackage {
-          pname = "weather";
+          pname = "waybar_weather";
           version = "0.1.0";
 
           src = ./.;
@@ -56,7 +56,7 @@
 
         apps.default = {
           type = "app";
-          program = "${self.packages.${system}.default}/bin/weather";
+          program = "${self.packages.${system}.default}/bin/waybar_weather";
         };
       });
 }

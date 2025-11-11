@@ -1,7 +1,7 @@
 { lib, rustPlatform }:
 
 rustPlatform.buildRustPackage {
-  pname = "weather";
+  pname = "waybar_weather";
   version = "0.1.0";
 
   src = ./.;
