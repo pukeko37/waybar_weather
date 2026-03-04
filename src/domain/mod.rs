@@ -363,10 +363,7 @@ mod tests {
         assert_eq!(std::mem::size_of_val(&pressure), std::mem::size_of::<u32>());
 
         let wind_direction = WindDirection::from_compass("S").unwrap();
-        assert_eq!(
-            std::mem::size_of_val(&wind_direction),
-            std::mem::size_of::<String>()
-        );
+        assert_eq!(std::mem::size_of_val(&wind_direction), 1);
     }
 
     // === Wind Speed Color Categorization Tests ===

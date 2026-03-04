@@ -290,31 +290,60 @@ impl fmt::Display for Pressure {
     }
 }
 
-/// Wind direction as compass point with validation
-#[derive(Debug, Clone, PartialEq)]
-pub struct WindDirection {
-    direction: String,
+/// Wind direction as one of 16 compass points
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WindDirection {
+    N, NNE, NE, ENE,
+    E, ESE, SE, SSE,
+    S, SSW, SW, WSW,
+    W, WNW, NW, NNW,
 }
 
 impl fmt::Display for WindDirection {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.direction)
+        let s = match self {
+            Self::N => "N",
+            Self::NNE => "NNE",
+            Self::NE => "NE",
+            Self::ENE => "ENE",
+            Self::E => "E",
+            Self::ESE => "ESE",
+            Self::SE => "SE",
+            Self::SSE => "SSE",
+            Self::S => "S",
+            Self::SSW => "SSW",
+            Self::SW => "SW",
+            Self::WSW => "WSW",
+            Self::W => "W",
+            Self::WNW => "WNW",
+            Self::NW => "NW",
+            Self::NNW => "NNW",
+        };
+        write!(f, "{}", s)
     }
 }
 
 impl WindDirection {
-    /// Create wind direction from compass string with validation
+    /// Parse a compass string into a WindDirection variant
     pub fn from_compass(compass: &str) -> Result<Self, WeatherError> {
-        let direction = compass.to_uppercase();
-        const VALID_DIRECTIONS: &[&str] = &[
-            "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW",
-            "NW", "NNW",
-        ];
-
-        if VALID_DIRECTIONS.contains(&direction.as_str()) {
-            Ok(Self { direction })
-        } else {
-            Err(WeatherError::InvalidDirection(compass.to_string()))
+        match compass.to_uppercase().as_str() {
+            "N" => Ok(Self::N),
+            "NNE" => Ok(Self::NNE),
+            "NE" => Ok(Self::NE),
+            "ENE" => Ok(Self::ENE),
+            "E" => Ok(Self::E),
+            "ESE" => Ok(Self::ESE),
+            "SE" => Ok(Self::SE),
+            "SSE" => Ok(Self::SSE),
+            "S" => Ok(Self::S),
+            "SSW" => Ok(Self::SSW),
+            "SW" => Ok(Self::SW),
+            "WSW" => Ok(Self::WSW),
+            "W" => Ok(Self::W),
+            "WNW" => Ok(Self::WNW),
+            "NW" => Ok(Self::NW),
+            "NNW" => Ok(Self::NNW),
+            _ => Err(WeatherError::InvalidDirection(compass.to_string())),
         }
     }
 }
