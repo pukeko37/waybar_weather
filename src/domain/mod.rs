@@ -8,6 +8,15 @@ pub use error::*;
 pub use models::*;
 pub use types::*;
 
+/// Port trait for fetching weather data.
+///
+/// Defines the capability boundary between the domain and infrastructure.
+/// Uses `anyhow::Error` because network/HTTP errors are genuinely
+/// open-ended infrastructure concerns.
+pub trait WeatherFetcher {
+    fn fetch_weather(&self, location: &str) -> Result<WeatherData, anyhow::Error>;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

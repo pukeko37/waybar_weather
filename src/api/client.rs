@@ -2,6 +2,7 @@
 
 use crate::api::models::WeatherApiResponse;
 use crate::domain::models::WeatherData;
+use crate::domain::WeatherFetcher;
 
 use anyhow::{Context, Result};
 use std::time::Duration;
@@ -109,6 +110,12 @@ impl Default for WeatherClient {
                 api_key: "test_key".to_string(),
             }
         })
+    }
+}
+
+impl WeatherFetcher for WeatherClient {
+    fn fetch_weather(&self, location: &str) -> Result<WeatherData> {
+        self.fetch_weather(location)
     }
 }
 
