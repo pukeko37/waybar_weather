@@ -171,16 +171,13 @@ mod tests {
     }
 
     #[test]
-    fn test_weather_condition_icon() {
+    fn test_weather_condition_description() {
         let condition = WeatherCondition::new("Clear".to_string());
-        assert_eq!(condition.icon(), "☀️");
+        assert_eq!(condition.description(), "Clear");
         assert_eq!(condition.to_string(), "Clear");
 
         let cloudy = WeatherCondition::new("Partly cloudy".to_string());
-        assert_eq!(cloudy.icon(), "⛅");
-
-        let rainy = WeatherCondition::new("Light rain".to_string());
-        assert_eq!(rainy.icon(), "🌧️");
+        assert_eq!(cloudy.description(), "Partly cloudy");
     }
 
     #[test]
@@ -467,57 +464,4 @@ mod tests {
         assert_eq!(WindSpeed::new(118).unwrap().category(), WindSpeedCategory::Hurricane);
     }
 
-    #[test]
-    fn test_wind_speed_format_colored() {
-        // Test that colored formatting produces correct Pango markup (only numbers colored)
-        let calm = WindSpeed::new(10).unwrap();
-        assert_eq!(
-            calm.format_colored(),
-            "<span foreground=\"#FFFFFF\">10</span> km/h"
-        );
-
-        let moderate = WindSpeed::new(30).unwrap();
-        assert_eq!(
-            moderate.format_colored(),
-            "<span foreground=\"#00AA00\">30</span> km/h"
-        );
-
-        let gale = WindSpeed::new(60).unwrap();
-        assert_eq!(
-            gale.format_colored(),
-            "<span foreground=\"#FFA500\">60</span> km/h"
-        );
-
-        let storm = WindSpeed::new(100).unwrap();
-        assert_eq!(
-            storm.format_colored(),
-            "<span foreground=\"#FF0000\">100</span> km/h"
-        );
-
-        let hurricane = WindSpeed::new(150).unwrap();
-        assert_eq!(
-            hurricane.format_colored(),
-            "<span foreground=\"#9B30FF\">150</span> km/h"
-        );
-    }
-
-    #[test]
-    fn test_wind_speed_format_colored_with_gusts() {
-        // Test that sustained wind and gusts are colored separately based on their own categories
-        let calm_with_moderate_gusts = WindSpeed::with_gusts(15, Some(45)).unwrap();
-        assert_eq!(calm_with_moderate_gusts.category(), WindSpeedCategory::Calm);
-        // Sustained: 15 km/h = Calm (white), Gusts: 45 km/h = Moderate Breezes (green)
-        assert_eq!(
-            calm_with_moderate_gusts.format_colored(),
-            "<span foreground=\"#FFFFFF\">15</span> km/h (Gusts: <span foreground=\"#00AA00\">45</span> km/h)"
-        );
-
-        let moderate_with_gale_gusts = WindSpeed::with_gusts(25, Some(60)).unwrap();
-        assert_eq!(moderate_with_gale_gusts.category(), WindSpeedCategory::ModerateBreezes);
-        // Sustained: 25 km/h = Moderate Breezes (green), Gusts: 60 km/h = Gales (orange)
-        assert_eq!(
-            moderate_with_gale_gusts.format_colored(),
-            "<span foreground=\"#00AA00\">25</span> km/h (Gusts: <span foreground=\"#FFA500\">60</span> km/h)"
-        );
-    }
 }

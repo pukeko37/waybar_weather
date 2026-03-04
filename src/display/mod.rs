@@ -1,5 +1,7 @@
 //! Display module for formatting weather data as Waybar JSON output.
+pub mod formatting;
 pub mod waybar;
+pub use formatting::*;
 pub use waybar::*;
 
 #[cfg(test)]
@@ -7,8 +9,8 @@ mod tests {
     use super::*;
     use crate::domain::{
         Astronomy, CurrentWeather, Humidity, HourlyWeather, LastUpdated, Location, Pressure,
-        Temperature, WeatherCondition, WeatherDay, WeatherData, WeatherTime, WindDirection,
-        WindSpeed,
+        Temperature, WeatherCondition, WeatherData, WeatherDay, WeatherTime, WindDirection,
+        WindSpeed, WindSpeedCategory,
     };
 
     #[test]
@@ -99,6 +101,68 @@ mod tests {
             .collect();
         assert_eq!(lines_with_updated.len(), 1);
         assert!(lines_with_updated[0].contains("2023-01-13 14:30Z"));
+    }
+
+    #[test]
+    fn test_condition_icon() {
+        let condition = WeatherCondition::new("Clear".to_string());
+        assert_eq!(condition_icon(&condition), "☀️");
+
+        let cloudy = WeatherCondition::new("Partly cloudy".to_string());
+        assert_eq!(condition_icon(&cloudy), "⛅");
+
+        let rainy = WeatherCondition::new("Light rain".to_string());
+        assert_eq!(condition_icon(&rainy), "🌧️");
+    }
+
+    #[test]
+    fn test_wind_speed_format_colored() {
+        let calm = WindSpeed::new(10).unwrap();
+        assert_eq!(
+            format_wind_colored(&calm),
+            "<span foreground=\"#FFFFFF\">10</span> km/h"
+        );
+
+        let moderate = WindSpeed::new(30).unwrap();
+        assert_eq!(
+            format_wind_colored(&moderate),
+            "<span foreground=\"#00AA00\">30</span> km/h"
+        );
+
+        let gale = WindSpeed::new(60).unwrap();
+        assert_eq!(
+            format_wind_colored(&gale),
+            "<span foreground=\"#FFA500\">60</span> km/h"
+        );
+
+        let storm = WindSpeed::new(100).unwrap();
+        assert_eq!(
+            format_wind_colored(&storm),
+            "<span foreground=\"#FF0000\">100</span> km/h"
+        );
+
+        let hurricane = WindSpeed::new(150).unwrap();
+        assert_eq!(
+            format_wind_colored(&hurricane),
+            "<span foreground=\"#9B30FF\">150</span> km/h"
+        );
+    }
+
+    #[test]
+    fn test_wind_speed_format_colored_with_gusts() {
+        let calm_with_moderate_gusts = WindSpeed::with_gusts(15, Some(45)).unwrap();
+        assert_eq!(calm_with_moderate_gusts.category(), WindSpeedCategory::Calm);
+        assert_eq!(
+            format_wind_colored(&calm_with_moderate_gusts),
+            "<span foreground=\"#FFFFFF\">15</span> km/h (Gusts: <span foreground=\"#00AA00\">45</span> km/h)"
+        );
+
+        let moderate_with_gale_gusts = WindSpeed::with_gusts(25, Some(60)).unwrap();
+        assert_eq!(moderate_with_gale_gusts.category(), WindSpeedCategory::ModerateBreezes);
+        assert_eq!(
+            format_wind_colored(&moderate_with_gale_gusts),
+            "<span foreground=\"#00AA00\">25</span> km/h (Gusts: <span foreground=\"#FFA500\">60</span> km/h)"
+        );
     }
 
     fn create_mock_weather_data() -> WeatherData {

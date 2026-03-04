@@ -1,5 +1,6 @@
 //! Waybar output formatter for weather data with functional composition.
 
+use super::formatting::{condition_icon, format_wind_colored, format_wind_colored_compact};
 use crate::domain::models::WeatherData;
 
 use anyhow::Result;
@@ -56,9 +57,9 @@ impl WaybarFormatter {
     fn format_display_text(&self, weather_data: &WeatherData) -> String {
         format!(
             "{} {}/ {} {}",
-            weather_data.current.condition.icon(),
+            condition_icon(&weather_data.current.condition),
             weather_data.current.temperature,
-            weather_data.current.wind_speed.format_colored_compact(),
+            format_wind_colored_compact(&weather_data.current.wind_speed),
             weather_data.location
         )
     }
@@ -84,7 +85,7 @@ impl WaybarFormatter {
             weather_data.current.feels_like,
             weather_data.current.humidity,
             dew_point,
-            weather_data.current.wind_speed.format_colored(),
+            format_wind_colored(&weather_data.current.wind_speed),
             weather_data.current.wind_direction,
             weather_data.current.pressure
         );
@@ -138,7 +139,7 @@ impl WaybarFormatter {
             hourly.time,
             hourly.temperature,
             hourly.condition,
-            hourly.wind_speed.format_colored(),
+            format_wind_colored(&hourly.wind_speed),
             hourly.wind_direction
         )
     }

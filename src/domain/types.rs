@@ -261,45 +261,14 @@ impl WindSpeed {
         self.category().color()
     }
 
-    /// Format wind speed with Pango color markup for Waybar tooltip
-    /// Only colors the numbers, not the units
-    pub fn format_colored(&self) -> String {
-        let sustained_color = self.color();
-        let sustained_colored = format!(
-            "<span foreground=\"{}\">{}</span>",
-            sustained_color, self.sustained
-        );
-
-        match self.gusts {
-            Some(gusts) => {
-                // Create a temporary WindSpeed with gust value to get its category
-                let gust_category = match gusts {
-                    0..=19 => WindSpeedCategory::Calm,
-                    20..=50 => WindSpeedCategory::ModerateBreezes,
-                    51..=88 => WindSpeedCategory::Gales,
-                    89..=117 => WindSpeedCategory::Storms,
-                    118.. => WindSpeedCategory::Hurricane,
-                };
-                let gust_color = gust_category.color();
-                let gust_colored = format!("<span foreground=\"{}\">{}</span>", gust_color, gusts);
-
-                format!(
-                    "{} km/h (Gusts: {} km/h)",
-                    sustained_colored, gust_colored
-                )
-            }
-            None => format!("{} km/h", sustained_colored),
-        }
+    /// Get sustained wind speed value
+    pub fn sustained_value(&self) -> u32 {
+        self.sustained
     }
 
-    /// Format wind speed compactly for title bar display (e.g., "43 km/h")
-    /// Only shows sustained wind speed, colored by category
-    pub fn format_colored_compact(&self) -> String {
-        let sustained_color = self.color();
-        format!(
-            "<span foreground=\"{}\">{}</span> km/h",
-            sustained_color, self.sustained
-        )
+    /// Get gust wind speed value if present
+    pub fn gusts_value(&self) -> Option<u32> {
+        self.gusts
     }
 }
 
@@ -551,20 +520,9 @@ impl WeatherCondition {
         Self { description }
     }
 
-    /// Get appropriate weather icon
-    pub fn icon(&self) -> &'static str {
-        let condition_lower = self.description.to_lowercase();
-        match condition_lower.as_str() {
-            c if c.contains("sunny") || c.contains("clear") => "☀️",
-            c if c.contains("partly") || c.contains("partial") => "⛅",
-            c if c.contains("cloudy") || c.contains("overcast") => "☁️",
-            c if c.contains("rain") || c.contains("drizzle") => "🌧️",
-            c if c.contains("storm") || c.contains("thunder") => "⛈️",
-            c if c.contains("snow") || c.contains("blizzard") => "🌨️",
-            c if c.contains("fog") || c.contains("mist") => "🌫️",
-            c if c.contains("wind") => "💨",
-            _ => "🌤️",
-        }
+    /// Get the condition description
+    pub fn description(&self) -> &str {
+        &self.description
     }
 }
 
