@@ -1,6 +1,6 @@
 //! Waybar output formatter for weather data with functional composition.
 
-use crate::api::models::WeatherData;
+use crate::domain::models::WeatherData;
 
 use anyhow::Result;
 
@@ -132,7 +132,7 @@ impl WaybarFormatter {
     }
 
     /// Format a single hourly forecast entry
-    fn format_hourly_entry(&self, hourly: &crate::api::models::HourlyWeather) -> String {
+    fn format_hourly_entry(&self, hourly: &crate::domain::models::HourlyWeather) -> String {
         format!(
             "• {} - {} {}\n          Wind: {} {}",
             hourly.time,

@@ -1,7 +1,9 @@
 //! Domain value objects for weather data with type-level safety and validation.
 
+pub mod models;
 pub mod types;
 
+pub use models::*;
 pub use types::*;
 
 #[cfg(test)]

@@ -8,6 +8,7 @@ pub use client::*;
 #[cfg(test)]
 mod tests {
     use crate::api::models::*;
+    use crate::domain::models::*;
 
     #[test]
     fn test_weather_response_parsing() {

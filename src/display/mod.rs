@@ -5,10 +5,10 @@ pub use waybar::*;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::models::*;
     use crate::domain::{
-        Astronomy as DomainAstronomy, Humidity, LastUpdated, Location, Pressure, Temperature,
-        WeatherCondition, WeatherTime, WindDirection, WindSpeed,
+        Astronomy, CurrentWeather, Humidity, HourlyWeather, LastUpdated, Location, Pressure,
+        Temperature, WeatherCondition, WeatherDay, WeatherData, WeatherTime, WindDirection,
+        WindSpeed,
     };
 
     #[test]
@@ -125,7 +125,7 @@ mod tests {
     fn create_mock_weather_data_with_astronomy() -> WeatherData {
         let mut weather_data = create_mock_weather_data();
 
-        let astronomy = DomainAstronomy::new(
+        let astronomy = Astronomy::new(
             WeatherTime::parse("06:30").unwrap(),
             WeatherTime::parse("18:30").unwrap(),
         );
