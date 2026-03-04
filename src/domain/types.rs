@@ -1,6 +1,6 @@
 //! Core domain types for weather data with compile-time safety and validation.
 
-use anyhow::{Context, Result};
+use super::error::WeatherError;
 use std::fmt;
 use std::marker::PhantomData;
 use time::{macros::format_description, OffsetDateTime, PrimitiveDateTime, Time};
@@ -17,15 +17,14 @@ where
     const UNIT: &'static str;
 
     /// Validate that a value is within the range [MIN, MAX]
-    fn validate(value: T) -> Result<()> {
+    fn validate(value: T) -> Result<(), WeatherError> {
         if value < Self::MIN || value > Self::MAX {
-            anyhow::bail!(
-                "Value {} {} is outside valid range ({} to {})",
-                value,
-                Self::UNIT,
-                Self::MIN,
-                Self::MAX
-            );
+            return Err(WeatherError::OutOfRange {
+                value: value.to_string(),
+                min: Self::MIN.to_string(),
+                max: Self::MAX.to_string(),
+                unit: Self::UNIT,
+            });
         }
         Ok(())
     }
@@ -50,7 +49,7 @@ where
     R: RangeValidated<T>,
 {
     /// Create a new validated value - the only way to construct this type
-    pub fn new(value: T) -> Result<Self> {
+    pub fn new(value: T) -> Result<Self, WeatherError> {
         R::validate(value)?;
         Ok(Self {
             value,
@@ -198,10 +197,10 @@ impl WindSpeedBuilder {
     }
 
     /// Build the WindSpeed instance with validation
-    pub fn build(self) -> anyhow::Result<WindSpeed> {
+    pub fn build(self) -> Result<WindSpeed, WeatherError> {
         let sustained = self
             .sustained
-            .ok_or_else(|| anyhow::anyhow!("Sustained wind speed is required"))?;
+            .ok_or(WeatherError::MissingField("Sustained wind speed"))?;
         WindSpeed::with_gusts(sustained, self.gusts)
     }
 }
@@ -221,12 +220,12 @@ pub struct WindSpeed {
 
 impl WindSpeed {
     /// Create wind speed with just sustained wind
-    pub fn new(sustained: u32) -> anyhow::Result<Self> {
+    pub fn new(sustained: u32) -> Result<Self, WeatherError> {
         Self::with_gusts(sustained, None)
     }
 
     /// Create wind speed with sustained wind and optional gusts
-    pub fn with_gusts(sustained: u32, gusts: Option<u32>) -> anyhow::Result<Self> {
+    pub fn with_gusts(sustained: u32, gusts: Option<u32>) -> Result<Self, WeatherError> {
         // Validate sustained wind speed using range
         WindSpeedRange::validate(sustained)?;
 
@@ -234,11 +233,7 @@ impl WindSpeed {
         if let Some(gusts) = gusts {
             WindSpeedRange::validate(gusts)?;
             if gusts < sustained {
-                anyhow::bail!(
-                    "Wind gusts {} km/h cannot be less than sustained wind {} km/h",
-                    gusts,
-                    sustained
-                );
+                return Err(WeatherError::InvalidGusts { sustained, gusts });
             }
         }
 
@@ -340,7 +335,7 @@ impl fmt::Display for WindDirection {
 
 impl WindDirection {
     /// Create wind direction from compass string with validation
-    pub fn from_compass(compass: &str) -> Result<Self> {
+    pub fn from_compass(compass: &str) -> Result<Self, WeatherError> {
         let direction = compass.to_uppercase();
         const VALID_DIRECTIONS: &[&str] = &[
             "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW",
@@ -350,7 +345,7 @@ impl WindDirection {
         if VALID_DIRECTIONS.contains(&direction.as_str()) {
             Ok(Self { direction })
         } else {
-            anyhow::bail!("Invalid compass direction: {}", compass)
+            Err(WeatherError::InvalidDirection(compass.to_string()))
         }
     }
 }
@@ -387,7 +382,7 @@ pub struct WeatherTime {
 
 impl WeatherTime {
     /// Parse time from various formats
-    pub fn parse(time_str: &str) -> Result<Self> {
+    pub fn parse(time_str: &str) -> Result<Self, WeatherError> {
         // Try different format patterns
         let trimmed = time_str.trim();
 
@@ -420,7 +415,7 @@ impl WeatherTime {
             return Ok(Self { time });
         }
 
-        anyhow::bail!("Unable to parse time: {}", time_str)
+        Err(WeatherError::InvalidTime(time_str.to_string()))
     }
 
     /// Get hour in 24-hour format
@@ -522,7 +517,7 @@ impl Astronomy {
     }
 
     /// Calculate solar noon as midpoint between sunrise and sunset
-    pub fn solar_noon(&self) -> Result<WeatherTime> {
+    pub fn solar_noon(&self) -> Result<WeatherTime, WeatherError> {
         let sunrise_seconds = self.sunrise.total_seconds();
         let sunset_seconds = self.sunset.total_seconds();
 
@@ -587,17 +582,18 @@ pub struct LastUpdated {
 
 impl LastUpdated {
     /// Create from Unix timestamp (epoch seconds)
-    pub fn from_epoch(epoch_seconds: i64) -> Result<Self> {
-        let datetime = OffsetDateTime::from_unix_timestamp(epoch_seconds)
-            .map_err(|e| anyhow::anyhow!("Invalid timestamp {}: {}", epoch_seconds, e))?;
+    pub fn from_epoch(epoch_seconds: i64) -> Result<Self, WeatherError> {
+        let datetime = OffsetDateTime::from_unix_timestamp(epoch_seconds).map_err(|e| {
+            WeatherError::InvalidTimestamp(format!("epoch {}: {}", epoch_seconds, e))
+        })?;
         Ok(Self { datetime })
     }
 
     /// Create from WeatherAPI format string (e.g., "2023-01-13 14:30")
-    pub fn from_api_format(api_string: &str) -> Result<Self> {
+    pub fn from_api_format(api_string: &str) -> Result<Self, WeatherError> {
         let format = format_description!("[year]-[month]-[day] [hour]:[minute]");
         let primitive_datetime = PrimitiveDateTime::parse(api_string, &format)
-            .with_context(|| format!("Failed to parse API timestamp: {}", api_string))?;
+            .map_err(|e| WeatherError::InvalidTimestamp(format!("{}: {}", api_string, e)))?;
 
         // Assume UTC timezone
         let datetime = primitive_datetime.assume_utc();
