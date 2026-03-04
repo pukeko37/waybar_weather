@@ -1,7 +1,11 @@
 //! Weather application with domain-driven design and type safety.
 //! Fetches weather data from WeatherAPI.com and outputs JSON for Waybar.
+//!
+//! This file is the composition root: it constructs concrete types and
+//! delegates to the application layer.
 
 mod api;
+mod app;
 mod display;
 mod domain;
 
@@ -24,9 +28,8 @@ fn main() -> Result<()> {
     };
     let formatter = WaybarFormatter::new();
 
-    match client.fetch_weather(&location) {
-        Ok(weather_data) => {
-            let output = formatter.format(&weather_data)?;
+    match app::fetch_and_format(&client, &formatter, &location) {
+        Ok(output) => {
             println!("{}", serde_json::to_string(&output)?);
         }
         Err(e) => {
@@ -52,17 +55,8 @@ mod integration_tests {
         let client = WeatherClient::new().expect("Failed to create client in test");
         let formatter = WaybarFormatter::new();
 
-        match client.fetch_weather("Wellington") {
-            Ok(weather_data) => {
-                // Validate domain model constraints
-                assert!(weather_data.current.temperature.as_celsius() >= -40);
-                assert!(weather_data.current.temperature.as_celsius() <= 55);
-                assert!(weather_data.current.humidity.as_int() >= 0);
-                assert!(weather_data.current.humidity.as_int() <= 100);
-                assert!(!weather_data.location.to_string().is_empty());
-
-                // Test formatting
-                let output = formatter.format(&weather_data).unwrap();
+        match app::fetch_and_format(&client, &formatter, "Wellington") {
+            Ok(output) => {
                 assert!(!output.text.is_empty());
                 assert!(!output.tooltip.is_empty());
                 assert!(output.text.contains("°C"));

@@ -4,7 +4,6 @@ pub mod error;
 pub mod models;
 pub mod types;
 
-pub use error::*;
 pub use models::*;
 pub use types::*;
 

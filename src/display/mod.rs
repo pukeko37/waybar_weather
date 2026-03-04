@@ -1,11 +1,11 @@
 //! Display module for formatting weather data as Waybar JSON output.
 pub mod formatting;
 pub mod waybar;
-pub use formatting::*;
 pub use waybar::*;
 
 #[cfg(test)]
 mod tests {
+    use super::formatting::*;
     use super::*;
     use crate::domain::{
         Astronomy, CurrentWeather, Humidity, HourlyWeather, LastUpdated, Location, Pressure,
