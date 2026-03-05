@@ -3,7 +3,10 @@
 //! WeatherAPI.com provides current weather, forecast, and astronomy data through a unified API.
 //! This module handles the JSON response structure and converts it to our domain models.
 
-use crate::domain::*;
+use crate::domain::{
+    Astronomy, CurrentWeather, HourlyWeather, Humidity, LastUpdated, Location, Pressure,
+    Temperature, WeatherCondition, WeatherData, WeatherDay, WeatherTime, WindDirection, WindSpeed,
+};
 use anyhow::{Context, Result};
 use serde::Deserialize;
 
@@ -103,7 +106,7 @@ pub struct AstroApi {
     pub sunset: String,
 }
 
-impl TryFrom<AstroApi> for crate::domain::Astronomy {
+impl TryFrom<AstroApi> for Astronomy {
     type Error = anyhow::Error;
 
     fn try_from(value: AstroApi) -> Result<Self> {
