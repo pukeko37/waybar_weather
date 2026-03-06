@@ -5,26 +5,30 @@
 
 use crate::domain::{WeatherCondition, WindSpeed, WindSpeedCategory};
 
+/// Get the Pango color string for a wind speed category.
+fn category_color(category: &WindSpeedCategory) -> &'static str {
+    match category {
+        WindSpeedCategory::Calm => "#FFFFFF",
+        WindSpeedCategory::ModerateBreezes => "#00AA00",
+        WindSpeedCategory::Gales => "#FFA500",
+        WindSpeedCategory::Storms => "#FF0000",
+        WindSpeedCategory::Hurricane => "#9B30FF",
+    }
+}
+
 /// Format wind speed with Pango color markup for Waybar tooltip.
 /// Only colors the numbers, not the units.
 pub fn format_wind_colored(wind: &WindSpeed) -> String {
-    let sustained_color = wind.color();
+    let sustained_color = category_color(&wind.category());
     let sustained_colored = format!(
         "<span foreground=\"{}\">{}</span>",
         sustained_color,
         wind.sustained_value()
     );
 
-    match wind.gusts_value() {
-        Some(gusts) => {
-            let gust_category = match gusts {
-                0..=19 => WindSpeedCategory::Calm,
-                20..=50 => WindSpeedCategory::ModerateBreezes,
-                51..=88 => WindSpeedCategory::Gales,
-                89..=117 => WindSpeedCategory::Storms,
-                118.. => WindSpeedCategory::Hurricane,
-            };
-            let gust_color = gust_category.color();
+    match (wind.gusts_value(), wind.gust_category()) {
+        (Some(gusts), Some(gust_cat)) => {
+            let gust_color = category_color(&gust_cat);
             let gust_colored = format!("<span foreground=\"{}\">{}</span>", gust_color, gusts);
 
             format!(
@@ -32,14 +36,14 @@ pub fn format_wind_colored(wind: &WindSpeed) -> String {
                 sustained_colored, gust_colored
             )
         }
-        None => format!("{} km/h", sustained_colored),
+        _ => format!("{} km/h", sustained_colored),
     }
 }
 
 /// Format wind speed compactly for title bar display (e.g., "43 km/h").
 /// Only shows sustained wind speed, colored by category.
 pub fn format_wind_colored_compact(wind: &WindSpeed) -> String {
-    let sustained_color = wind.color();
+    let sustained_color = category_color(&wind.category());
     format!(
         "<span foreground=\"{}\">{}</span> km/h",
         sustained_color,

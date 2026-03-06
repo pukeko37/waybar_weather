@@ -4,14 +4,13 @@
 //! This file is the composition root: it constructs concrete types and
 //! delegates to the application layer.
 
-mod api;
 mod app;
-mod display;
 mod domain;
+mod infra;
 
 use anyhow::Result;
-use api::WeatherClient;
-use display::WaybarFormatter;
+use infra::api::WeatherClient;
+use infra::display::WaybarFormatter;
 
 fn main() -> Result<()> {
     let location = std::env::args()

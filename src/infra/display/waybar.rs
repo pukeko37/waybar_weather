@@ -1,6 +1,7 @@
 //! Waybar output formatter for weather data with functional composition.
 
 use super::formatting::{condition_icon, format_wind_colored, format_wind_colored_compact};
+use crate::app::WeatherFormatter;
 use crate::domain::models::WeatherData;
 
 use anyhow::Result;
@@ -21,14 +22,6 @@ impl WaybarFormatter {
     /// Create a new Waybar formatter
     pub fn new() -> Self {
         Self
-    }
-
-    /// Format weather data into Waybar output
-    pub fn format(&self, weather_data: &WeatherData) -> Result<WaybarOutput> {
-        let text = self.format_display_text(weather_data);
-        let tooltip = self.format_tooltip(weather_data)?;
-
-        Ok(WaybarOutput { text, tooltip })
     }
 
     /// Create error output for display when weather data is unavailable
@@ -142,6 +135,16 @@ impl WaybarFormatter {
             format_wind_colored(&hourly.wind_speed),
             hourly.wind_direction
         )
+    }
+}
+
+impl WeatherFormatter for WaybarFormatter {
+    type Output = WaybarOutput;
+
+    fn format(&self, data: &WeatherData) -> Result<WaybarOutput> {
+        let text = self.format_display_text(data);
+        let tooltip = self.format_tooltip(data)?;
+        Ok(WaybarOutput { text, tooltip })
     }
 }
 

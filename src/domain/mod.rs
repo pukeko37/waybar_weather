@@ -7,15 +7,6 @@ pub mod types;
 pub use models::*;
 pub use types::*;
 
-/// Port trait for fetching weather data.
-///
-/// Defines the capability boundary between the domain and infrastructure.
-/// Uses `anyhow::Error` because network/HTTP errors are genuinely
-/// open-ended infrastructure concerns.
-pub trait WeatherFetcher {
-    fn fetch_weather(&self, location: &str) -> Result<WeatherData, anyhow::Error>;
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -374,86 +365,66 @@ mod tests {
         assert_eq!(std::mem::size_of_val(&wind_direction), 1);
     }
 
-    // === Wind Speed Color Categorization Tests ===
+    // === Wind Speed Categorization Tests ===
 
     #[test]
     fn test_wind_speed_calm_category() {
-        // Test calm winds (0-19 km/h) - white color
         let calm_zero = WindSpeed::new(0).unwrap();
         assert_eq!(calm_zero.category(), WindSpeedCategory::Calm);
-        assert_eq!(calm_zero.color(), "#FFFFFF");
 
         let calm_mid = WindSpeed::new(10).unwrap();
         assert_eq!(calm_mid.category(), WindSpeedCategory::Calm);
-        assert_eq!(calm_mid.color(), "#FFFFFF");
 
         let calm_max = WindSpeed::new(19).unwrap();
         assert_eq!(calm_max.category(), WindSpeedCategory::Calm);
-        assert_eq!(calm_max.color(), "#FFFFFF");
     }
 
     #[test]
     fn test_wind_speed_moderate_breezes_category() {
-        // Test moderate breezes (20-50 km/h) - green color
         let moderate_min = WindSpeed::new(20).unwrap();
         assert_eq!(moderate_min.category(), WindSpeedCategory::ModerateBreezes);
-        assert_eq!(moderate_min.color(), "#00AA00");
 
         let moderate_mid = WindSpeed::new(35).unwrap();
         assert_eq!(moderate_mid.category(), WindSpeedCategory::ModerateBreezes);
-        assert_eq!(moderate_mid.color(), "#00AA00");
 
         let moderate_max = WindSpeed::new(50).unwrap();
         assert_eq!(moderate_max.category(), WindSpeedCategory::ModerateBreezes);
-        assert_eq!(moderate_max.color(), "#00AA00");
     }
 
     #[test]
     fn test_wind_speed_gales_category() {
-        // Test gales (51-88 km/h) - orange color
         let gale_min = WindSpeed::new(51).unwrap();
         assert_eq!(gale_min.category(), WindSpeedCategory::Gales);
-        assert_eq!(gale_min.color(), "#FFA500");
 
         let gale_mid = WindSpeed::new(70).unwrap();
         assert_eq!(gale_mid.category(), WindSpeedCategory::Gales);
-        assert_eq!(gale_mid.color(), "#FFA500");
 
         let gale_max = WindSpeed::new(88).unwrap();
         assert_eq!(gale_max.category(), WindSpeedCategory::Gales);
-        assert_eq!(gale_max.color(), "#FFA500");
     }
 
     #[test]
     fn test_wind_speed_storms_category() {
-        // Test storms (89-117 km/h) - red color
         let storm_min = WindSpeed::new(89).unwrap();
         assert_eq!(storm_min.category(), WindSpeedCategory::Storms);
-        assert_eq!(storm_min.color(), "#FF0000");
 
         let storm_mid = WindSpeed::new(100).unwrap();
         assert_eq!(storm_mid.category(), WindSpeedCategory::Storms);
-        assert_eq!(storm_mid.color(), "#FF0000");
 
         let storm_max = WindSpeed::new(117).unwrap();
         assert_eq!(storm_max.category(), WindSpeedCategory::Storms);
-        assert_eq!(storm_max.color(), "#FF0000");
     }
 
     #[test]
     fn test_wind_speed_hurricane_category() {
-        // Test hurricane (118+ km/h) - purple color
         let hurricane_min = WindSpeed::new(118).unwrap();
         assert_eq!(hurricane_min.category(), WindSpeedCategory::Hurricane);
-        assert_eq!(hurricane_min.color(), "#9B30FF");
 
         let hurricane_mid = WindSpeed::new(150).unwrap();
         assert_eq!(hurricane_mid.category(), WindSpeedCategory::Hurricane);
-        assert_eq!(hurricane_mid.color(), "#9B30FF");
 
         let hurricane_max = WindSpeed::new(200).unwrap();
         assert_eq!(hurricane_max.category(), WindSpeedCategory::Hurricane);
-        assert_eq!(hurricane_max.color(), "#9B30FF");
     }
 
     #[test]
@@ -469,4 +440,17 @@ mod tests {
         assert_eq!(WindSpeed::new(118).unwrap().category(), WindSpeedCategory::Hurricane);
     }
 
+    #[test]
+    fn test_wind_speed_gust_category() {
+        // No gusts
+        let no_gusts = WindSpeed::new(15).unwrap();
+        assert_eq!(no_gusts.gust_category(), None);
+
+        // With gusts
+        let with_gusts = WindSpeed::with_gusts(15, Some(45)).unwrap();
+        assert_eq!(with_gusts.gust_category(), Some(WindSpeedCategory::ModerateBreezes));
+
+        let with_gale_gusts = WindSpeed::with_gusts(25, Some(60)).unwrap();
+        assert_eq!(with_gale_gusts.gust_category(), Some(WindSpeedCategory::Gales));
+    }
 }

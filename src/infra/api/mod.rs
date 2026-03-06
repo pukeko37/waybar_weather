@@ -7,7 +7,7 @@ pub use client::*;
 
 #[cfg(test)]
 mod tests {
-    use crate::api::models::*;
+    use crate::infra::api::models::*;
     use crate::domain::models::*;
 
     #[test]

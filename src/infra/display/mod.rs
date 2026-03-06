@@ -7,6 +7,7 @@ pub use waybar::*;
 mod tests {
     use super::formatting::*;
     use super::*;
+    use crate::app::WeatherFormatter;
     use crate::domain::{
         Astronomy, CurrentWeather, Humidity, HourlyWeather, LastUpdated, Location, Pressure,
         Temperature, WeatherCondition, WeatherData, WeatherDay, WeatherTime, WindDirection,
@@ -163,6 +164,38 @@ mod tests {
             format_wind_colored(&moderate_with_gale_gusts),
             "<span foreground=\"#00AA00\">25</span> km/h (Gusts: <span foreground=\"#FFA500\">60</span> km/h)"
         );
+    }
+
+    // === Wind Speed Color Tests (moved from domain) ===
+
+    #[test]
+    fn test_wind_speed_calm_color() {
+        let calm = WindSpeed::new(10).unwrap();
+        assert_eq!(format_wind_colored(&calm), "<span foreground=\"#FFFFFF\">10</span> km/h");
+    }
+
+    #[test]
+    fn test_wind_speed_moderate_color() {
+        let moderate = WindSpeed::new(35).unwrap();
+        assert_eq!(format_wind_colored(&moderate), "<span foreground=\"#00AA00\">35</span> km/h");
+    }
+
+    #[test]
+    fn test_wind_speed_gale_color() {
+        let gale = WindSpeed::new(70).unwrap();
+        assert_eq!(format_wind_colored(&gale), "<span foreground=\"#FFA500\">70</span> km/h");
+    }
+
+    #[test]
+    fn test_wind_speed_storm_color() {
+        let storm = WindSpeed::new(100).unwrap();
+        assert_eq!(format_wind_colored(&storm), "<span foreground=\"#FF0000\">100</span> km/h");
+    }
+
+    #[test]
+    fn test_wind_speed_hurricane_color() {
+        let hurricane = WindSpeed::new(150).unwrap();
+        assert_eq!(format_wind_colored(&hurricane), "<span foreground=\"#9B30FF\">150</span> km/h");
     }
 
     fn create_mock_weather_data() -> WeatherData {

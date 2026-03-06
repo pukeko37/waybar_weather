@@ -1,8 +1,8 @@
 //! HTTP client for fetching weather data from WeatherAPI.com API.
 
-use crate::api::models::WeatherApiResponse;
+use crate::app::WeatherFetcher;
+use crate::infra::api::models::WeatherApiResponse;
 use crate::domain::models::WeatherData;
-use crate::domain::WeatherFetcher;
 
 use anyhow::{Context, Result};
 use std::time::Duration;

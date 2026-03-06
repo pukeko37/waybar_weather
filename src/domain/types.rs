@@ -157,14 +157,14 @@ pub enum WindSpeedCategory {
 }
 
 impl WindSpeedCategory {
-    /// Get the color associated with this wind speed category
-    pub fn color(&self) -> &'static str {
-        match self {
-            Self::Calm => "#FFFFFF",
-            Self::ModerateBreezes => "#00AA00",
-            Self::Gales => "#FFA500",
-            Self::Storms => "#FF0000",
-            Self::Hurricane => "#9B30FF",
+    /// Categorize a raw wind speed value in km/h
+    pub fn from_speed(speed: u32) -> Self {
+        match speed {
+            0..=19 => Self::Calm,
+            20..=50 => Self::ModerateBreezes,
+            51..=88 => Self::Gales,
+            89..=117 => Self::Storms,
+            118.. => Self::Hurricane,
         }
     }
 }
@@ -256,9 +256,9 @@ impl WindSpeed {
         }
     }
 
-    /// Get the color for this wind speed category
-    pub fn color(&self) -> &'static str {
-        self.category().color()
+    /// Get the category of gust wind speed, if gusts are present
+    pub fn gust_category(&self) -> Option<WindSpeedCategory> {
+        self.gusts.map(WindSpeedCategory::from_speed)
     }
 
     /// Get sustained wind speed value

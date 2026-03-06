@@ -1,16 +1,36 @@
-//! Application layer: orchestrates domain and display without infrastructure details.
+//! Application layer: orchestrates domain logic through port traits.
+//!
+//! Defines the port traits (`WeatherFetcher`, `WeatherFormatter`) that
+//! infrastructure adapters implement. No `use crate::infra::` imports here.
 
-use crate::display::{WaybarFormatter, WaybarOutput};
-use crate::domain::WeatherFetcher;
+use crate::domain::WeatherData;
 
-/// Fetch weather data and format it for Waybar output.
+/// Port trait for fetching weather data.
 ///
-/// Generic over the fetcher implementation, enabling test doubles.
-pub fn fetch_and_format<F: WeatherFetcher>(
+/// Defines the capability boundary between the application and infrastructure.
+/// Uses `anyhow::Error` because network/HTTP errors are genuinely
+/// open-ended infrastructure concerns.
+pub trait WeatherFetcher {
+    fn fetch_weather(&self, location: &str) -> Result<WeatherData, anyhow::Error>;
+}
+
+/// Port trait for formatting weather data into some output representation.
+///
+/// The associated `Output` type lets each adapter choose its own output
+/// (e.g., `WaybarOutput` for the Waybar formatter).
+pub trait WeatherFormatter {
+    type Output;
+    fn format(&self, data: &WeatherData) -> Result<Self::Output, anyhow::Error>;
+}
+
+/// Fetch weather data and format it for output.
+///
+/// Generic over both ports, enabling test doubles for either side.
+pub fn fetch_and_format<F: WeatherFetcher, Fmt: WeatherFormatter>(
     fetcher: &F,
-    formatter: &WaybarFormatter,
+    formatter: &Fmt,
     location: &str,
-) -> Result<WaybarOutput, anyhow::Error> {
+) -> Result<Fmt::Output, anyhow::Error> {
     let weather_data = fetcher.fetch_weather(location)?;
     let output = formatter.format(&weather_data)?;
     Ok(output)
@@ -23,6 +43,7 @@ mod tests {
         CurrentWeather, Humidity, LastUpdated, Location, Pressure, Temperature, WeatherCondition,
         WeatherData, WeatherDay, WindDirection, WindSpeed,
     };
+    use crate::infra::display::WaybarFormatter;
 
     struct StubWeatherFetcher {
         data: Result<WeatherData, anyhow::Error>,
