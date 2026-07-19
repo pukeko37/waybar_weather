@@ -149,24 +149,7 @@ impl TryFrom<HourApi> for HourlyWeather {
 
         let condition = WeatherCondition::new(value.condition.text);
 
-        let sustained_wind = value.wind_kph.round() as u32;
-        let gust_wind = value.gust_kph.round() as u32;
-
-        let wind_speed = if gust_wind > sustained_wind {
-            WindSpeed::builder()
-                .sustained(sustained_wind)
-                .with_gusts(gust_wind)
-                .build()
-                .with_context(|| {
-                    format!(
-                        "Invalid wind data: sustained {} km/h, gusts {} km/h",
-                        sustained_wind, gust_wind
-                    )
-                })?
-        } else {
-            WindSpeed::new(sustained_wind)
-                .with_context(|| format!("Wind speed out of range: {}", sustained_wind))?
-        };
+        let wind_speed = parse_wind_speed(value.wind_kph, value.gust_kph)?;
 
         let wind_direction = WindDirection::from_compass(&value.wind_dir)
             .with_context(|| format!("Invalid wind direction: {}", value.wind_dir))?;
@@ -219,24 +202,7 @@ impl TryFrom<CurrentApi> for CurrentWeather {
         let humidity = Humidity::new(value.humidity as f32)
             .with_context(|| format!("Humidity out of range: {}", value.humidity))?;
 
-        let sustained_wind = value.wind_kph.round() as u32;
-        let gust_wind = value.gust_kph.round() as u32;
-
-        let wind_speed = if gust_wind > sustained_wind {
-            WindSpeed::builder()
-                .sustained(sustained_wind)
-                .with_gusts(gust_wind)
-                .build()
-                .with_context(|| {
-                    format!(
-                        "Invalid wind data: sustained {} km/h, gusts {} km/h",
-                        sustained_wind, gust_wind
-                    )
-                })?
-        } else {
-            WindSpeed::new(sustained_wind)
-                .with_context(|| format!("Wind speed out of range: {}", sustained_wind))?
-        };
+        let wind_speed = parse_wind_speed(value.wind_kph, value.gust_kph)?;
 
         let pressure = Pressure::new(value.pressure_mb.round() as u32)
             .with_context(|| format!("Pressure out of range: {}", value.pressure_mb))?;
@@ -262,4 +228,28 @@ impl TryFrom<CurrentApi> for CurrentWeather {
 #[derive(Debug, Deserialize)]
 pub struct ConditionApi {
     pub text: String,
+}
+
+/// Build a `WindSpeed` from WeatherAPI.com's raw sustained/gust km/h fields,
+/// rounding to the nearest whole km/h and only attaching gusts when they
+/// actually exceed the sustained speed (WindSpeed's own invariant).
+fn parse_wind_speed(sustained_kph: f64, gust_kph: f64) -> Result<WindSpeed> {
+    let sustained_wind = sustained_kph.round() as u32;
+    let gust_wind = gust_kph.round() as u32;
+
+    if gust_wind > sustained_wind {
+        WindSpeed::builder()
+            .sustained(sustained_wind)
+            .with_gusts(gust_wind)
+            .build()
+            .with_context(|| {
+                format!(
+                    "Invalid wind data: sustained {} km/h, gusts {} km/h",
+                    sustained_wind, gust_wind
+                )
+            })
+    } else {
+        WindSpeed::new(sustained_wind)
+            .with_context(|| format!("Wind speed out of range: {}", sustained_wind))
+    }
 }
