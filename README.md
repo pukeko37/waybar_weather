@@ -141,14 +141,17 @@ The program outputs JSON in the format expected by Waybar:
 
 ```json
 {
-  "text": "☀️ 20°C Wellington",
+  "text": "☀️ 20°C/ 15 km/h Wellington",
   "tooltip": "📍 Location: Wellington\n🌡️ Temperature: 20°C\n..."
 }
 ```
 
+(the wind-speed number in `text` and `tooltip` is wrapped in Pango markup for colour, stripped above for readability — see "Wind Speed Colour Coding" below)
+
 ### Text Format
 - Weather emoji based on conditions
 - Temperature in Celsius
+- Sustained wind speed, colour-coded by intensity (see below)
 - Location name
 
 ### Tooltip Information
@@ -177,6 +180,20 @@ The program maps weather conditions to appropriate emoji:
 - 🌫️ Fog/Mist
 - 💨 Windy conditions
 - 🌤️ Default/Unknown conditions
+
+## Wind Speed Colour Coding
+
+Sustained wind speed (and, in the tooltip, gusts) is colour-coded via Pango markup, in both the bar text and the tooltip:
+
+| Category | Sustained speed | Colour |
+|---|---|---|
+| Calm | 0–19 km/h | white |
+| Moderate breezes | 20–50 km/h | green |
+| Gales | 51–88 km/h | orange |
+| Storms | 89–117 km/h | red |
+| Hurricane force | 118+ km/h | purple |
+
+Only the number is coloured, not the "km/h" unit text. When gusts are present, they're coloured independently by their own category, so a calm sustained reading gusting into gale force will show two different colours on the same line.
 
 ## Error Handling
 
