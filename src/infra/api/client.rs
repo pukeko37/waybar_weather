@@ -31,8 +31,11 @@ impl WeatherClient {
         })
     }
 
-    /// Create a new weather client with explicit API key (for testing)
-    #[cfg(test)]
+    /// Create a new weather client with an explicit API key, bypassing the
+    /// `WEATHER_API_KEY` environment read. Public so integration tests in
+    /// `tests/` (which link against this crate as an ordinary library, not
+    /// under `cfg(test)`) can construct a client without touching the
+    /// process environment.
     pub fn with_api_key(api_key: String) -> Self {
         let agent = ureq::AgentBuilder::new()
             .timeout(Duration::from_secs(10))
@@ -170,53 +173,4 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_fetch_weather_integration() {
-        // Integration test - only runs when API key is available and not in CI
-        if std::env::var("CI").is_ok() {
-            return;
-        }
-
-        // Try to get API key from environment
-        if let Ok(api_key) = std::env::var("WEATHER_API_KEY") {
-            let client = WeatherClient::with_api_key(api_key);
-
-            match client.fetch_weather("Wellington") {
-                Ok(weather_data) => {
-                    // Basic validation that we got weather data
-                    assert!(!weather_data.location.to_string().is_empty());
-                    // Temperature should be reasonable for Earth
-                    assert!(weather_data.current.temperature.as_celsius() >= -40);
-                    assert!(weather_data.current.temperature.as_celsius() <= 55);
-                }
-                Err(e) => {
-                    // Log error but don't fail test in case of network issues
-                    eprintln!("Integration test warning (network issues expected): {}", e);
-                }
-            }
-        } else {
-            eprintln!("Skipping integration test - no WEATHER_API_KEY environment variable");
-        }
-    }
-
-    #[test]
-    fn test_fetch_weather_invalid_api_key() {
-        // Skip in CI environments
-        if std::env::var("CI").is_ok() {
-            return;
-        }
-
-        let client = WeatherClient::with_api_key("invalid_key".to_string());
-
-        let result = client.fetch_weather("Wellington");
-        assert!(result.is_err());
-
-        let error_message = result.unwrap_err().to_string();
-        // WeatherAPI returns 401 or 403 for invalid API key
-        assert!(
-            error_message.contains("401")
-                || error_message.contains("403")
-                || error_message.contains("invalid")
-        );
-    }
 }

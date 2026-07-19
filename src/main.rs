@@ -4,13 +4,10 @@
 //! This file is the composition root: it constructs concrete types and
 //! delegates to the application layer.
 
-mod app;
-mod domain;
-mod infra;
-
 use anyhow::Result;
-use infra::api::WeatherClient;
-use infra::display::WaybarFormatter;
+use waybar_weather::app;
+use waybar_weather::infra::api::WeatherClient;
+use waybar_weather::infra::display::WaybarFormatter;
 
 fn main() -> Result<()> {
     let location = std::env::args()
@@ -41,35 +38,8 @@ fn main() -> Result<()> {
 }
 
 #[cfg(test)]
-mod integration_tests {
+mod tests {
     use super::*;
-
-    #[test]
-    fn test_full_weather_flow() {
-        // Skip in CI environments or when API key is not available
-        if std::env::var("CI").is_ok() || std::env::var("WEATHER_API_KEY").is_err() {
-            return;
-        }
-
-        let client = WeatherClient::new().expect("Failed to create client in test");
-        let formatter = WaybarFormatter::new();
-
-        match app::fetch_and_format(&client, &formatter, "Wellington") {
-            Ok(output) => {
-                assert!(!output.text.is_empty());
-                assert!(!output.tooltip.is_empty());
-                assert!(output.text.contains("°C"));
-
-                // Validate JSON serialization
-                let json = serde_json::to_string(&output).unwrap();
-                assert!(json.contains("text"));
-                assert!(json.contains("tooltip"));
-            }
-            Err(e) => {
-                eprintln!("Integration test warning (network issues expected): {}", e);
-            }
-        }
-    }
 
     #[test]
     fn test_error_handling_flow() {
