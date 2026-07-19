@@ -133,11 +133,17 @@ impl Humidity {
     }
 
     /// Calculate dew point given temperature and humidity
+    ///
+    /// The raw formula can fall outside `Temperature`'s valid range on cold,
+    /// dry readings (e.g. -30°C at 20% humidity computes to -46°C, below the
+    /// -40°C floor) — clamp into range rather than silently reporting back
+    /// the air temperature, which would misrepresent the humidity reading.
     pub fn dew_point(&self, temperature: &Temperature) -> Temperature {
         let temp_c = temperature.as_celsius();
         let humidity_percent = self.as_int();
         let dew_point = temp_c - (100 - humidity_percent) / 5;
-        Temperature::new(dew_point).unwrap_or(*temperature)
+        let clamped = dew_point.clamp(WeatherTempRange::MIN, WeatherTempRange::MAX);
+        Temperature::new(clamped).expect("clamped to WeatherTempRange bounds")
     }
 }
 
@@ -247,13 +253,7 @@ impl WindSpeed {
 
     /// Categorize wind speed based on sustained wind
     pub fn category(&self) -> WindSpeedCategory {
-        match self.sustained {
-            0..=19 => WindSpeedCategory::Calm,
-            20..=50 => WindSpeedCategory::ModerateBreezes,
-            51..=88 => WindSpeedCategory::Gales,
-            89..=117 => WindSpeedCategory::Storms,
-            118.. => WindSpeedCategory::Hurricane,
-        }
+        WindSpeedCategory::from_speed(self.sustained)
     }
 
     /// Get the category of gust wind speed, if gusts are present

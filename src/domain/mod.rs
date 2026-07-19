@@ -189,6 +189,16 @@ mod tests {
     }
 
     #[test]
+    fn test_dew_point_clamps_below_temperature_range() {
+        // -30°C at 20% humidity computes to -46°C, below WeatherTempRange's -40°C floor.
+        let temp = Temperature::new(-30).unwrap();
+        let humidity = Humidity::new(20.0).unwrap();
+
+        let dew_point = humidity.dew_point(&temp);
+        assert_eq!(dew_point.as_celsius(), -40);
+    }
+
+    #[test]
     fn test_day_length_calculation() {
         let sunrise = WeatherTime::parse("06:30 AM").unwrap();
         let sunset = WeatherTime::parse("06:30 PM").unwrap();
