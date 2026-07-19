@@ -57,14 +57,14 @@ impl WaybarFormatter {
         )
     }
 
-    /// Format the detailed tooltip information
-    fn format_tooltip(&self, weather_data: &WeatherData) -> Result<String> {
+    /// Format the location/temperature/condition/feels-like/humidity/wind/pressure block
+    fn format_basic_info(&self, weather_data: &WeatherData) -> String {
         let dew_point = weather_data
             .current
             .humidity
             .dew_point(&weather_data.current.temperature);
 
-        let basic_info = format!(
+        format!(
             "📍 Location: {}\n\
              🌡️ Temperature: {}\n\
              🌤️ Condition: {}\n\
@@ -81,7 +81,12 @@ impl WaybarFormatter {
             format_wind_colored(&weather_data.current.wind_speed),
             weather_data.current.wind_direction,
             weather_data.current.pressure
-        );
+        )
+    }
+
+    /// Format the detailed tooltip information
+    fn format_tooltip(&self, weather_data: &WeatherData) -> Result<String> {
+        let basic_info = self.format_basic_info(weather_data);
 
         let astronomy_info = weather_data
             .weather_day
