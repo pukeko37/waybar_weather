@@ -189,6 +189,52 @@ mod tests {
     }
 
     #[test]
+    fn test_apparent_temperature_calculation() {
+        // 20C, 60% humidity, 15 km/h wind: moderate humidity and light
+        // wind partially offset each other, landing close to but below
+        // the raw air temperature.
+        let temp = Temperature::new(20).unwrap();
+        let humidity = Humidity::new(60.0).unwrap();
+        let wind = WindSpeed::new(15).unwrap();
+        assert_eq!(apparent_temperature(&temp, &humidity, &wind).as_celsius(), 18);
+    }
+
+    #[test]
+    fn test_apparent_temperature_humid_calm_feels_hotter() {
+        // High humidity with no wind to offset it should push apparent
+        // temperature above the raw air temperature.
+        let temp = Temperature::new(30).unwrap();
+        let humidity = Humidity::new(90.0).unwrap();
+        let wind = WindSpeed::new(0).unwrap();
+        let at = apparent_temperature(&temp, &humidity, &wind).as_celsius();
+        assert!(at > 30, "expected apparent temperature above 30C, got {at}C");
+    }
+
+    #[test]
+    fn test_apparent_temperature_windy_dry_feels_colder() {
+        // Strong wind with low humidity should push apparent temperature
+        // below the raw air temperature.
+        let temp = Temperature::new(10).unwrap();
+        let humidity = Humidity::new(20.0).unwrap();
+        let wind = WindSpeed::new(60).unwrap();
+        let at = apparent_temperature(&temp, &humidity, &wind).as_celsius();
+        assert!(at < 10, "expected apparent temperature below 10C, got {at}C");
+    }
+
+    #[test]
+    fn test_apparent_temperature_clamps_at_extremes() {
+        // Cold and windy enough that the raw AT formula would fall below
+        // WeatherTempRange's -40C floor.
+        let temp = Temperature::new(-40).unwrap();
+        let humidity = Humidity::new(50.0).unwrap();
+        let wind = WindSpeed::new(200).unwrap();
+        assert_eq!(
+            apparent_temperature(&temp, &humidity, &wind).as_celsius(),
+            -40
+        );
+    }
+
+    #[test]
     fn test_dew_point_clamps_below_temperature_range() {
         // -30°C at 20% humidity computes to -46°C, below WeatherTempRange's -40°C floor.
         let temp = Temperature::new(-30).unwrap();

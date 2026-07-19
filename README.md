@@ -9,6 +9,7 @@ A Rust-based weather data fetcher for Waybar that retrieves weather information 
 - Supports custom location (defaults to Wellington, NZ)
 - Comprehensive weather information including:
   - Current temperature and conditions
+  - Calculated "feels like" (apparent) temperature — computed locally using the Australian Bureau of Meteorology's Apparent Temperature model, not taken from the API
   - Humidity and dew point calculation
   - Wind speed, direction, and gusts
   - Atmospheric pressure
@@ -156,7 +157,7 @@ The program outputs JSON in the format expected by Waybar:
 
 ### Tooltip Information
 - Location
-- Current temperature and "feels like" temperature
+- Current temperature and calculated "feels like" (apparent) temperature
 - Weather condition description
 - Humidity percentage and calculated dew point
 - Wind speed, direction, and gusts (when available)

@@ -147,6 +147,42 @@ impl Humidity {
     }
 }
 
+/// Compute apparent ("feels like") temperature using the Australian Bureau
+/// of Meteorology's Apparent Temperature model (Steadman 1994):
+///
+/// `AT = Ta + 0.33·e - 0.70·ws - 4.00`
+///
+/// where `e` is water vapour pressure (a Magnus-type approximation from
+/// humidity and temperature) and `ws` is wind speed in m/s. Humidity raises
+/// apparent temperature (impairs evaporative cooling); wind lowers it
+/// (increases convective heat loss). Computed locally rather than trusting
+/// an upstream provider's own "feels like" value, whose algorithm is
+/// otherwise unknown — see `wiki/decisions/compute-feels-like-locally.md`.
+///
+/// Sustained wind speed (km/h, as measured by WeatherAPI.com) is converted
+/// to m/s; no elevation adjustment is applied (BOM's model assumes 10m,
+/// which a standard weather-station anemometer approximates). The result
+/// can fall outside `Temperature`'s valid range at extremes (the same
+/// failure mode `Humidity::dew_point` has) and is clamped for the same
+/// reason.
+pub fn apparent_temperature(
+    temperature: &Temperature,
+    humidity: &Humidity,
+    wind_speed: &WindSpeed,
+) -> Temperature {
+    let temp_c = temperature.as_celsius() as f64;
+    let humidity_percent = humidity.value() as f64;
+    let wind_ms = wind_speed.sustained_value() as f64 / 3.6;
+
+    let vapour_pressure =
+        (humidity_percent / 100.0) * 6.105 * ((17.27 * temp_c) / (237.7 + temp_c)).exp();
+    let apparent_temp = temp_c + 0.33 * vapour_pressure - 0.70 * wind_ms - 4.00;
+
+    let clamped =
+        (apparent_temp.round() as i32).clamp(WeatherTempRange::MIN, WeatherTempRange::MAX);
+    Temperature::new(clamped).expect("clamped to WeatherTempRange bounds")
+}
+
 /// Wind speed category based on sustained wind speed
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WindSpeedCategory {

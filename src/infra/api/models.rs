@@ -4,8 +4,9 @@
 //! This module handles the JSON response structure and converts it to our domain models.
 
 use crate::domain::{
-    Astronomy, CurrentWeather, HourlyWeather, Humidity, LastUpdated, Location, Pressure,
-    Temperature, WeatherCondition, WeatherData, WeatherDay, WeatherTime, WindDirection, WindSpeed,
+    apparent_temperature, Astronomy, CurrentWeather, HourlyWeather, Humidity, LastUpdated,
+    Location, Pressure, Temperature, WeatherCondition, WeatherData, WeatherDay, WeatherTime,
+    WindDirection, WindSpeed,
 };
 use anyhow::{Context, Result};
 use serde::Deserialize;
@@ -175,7 +176,6 @@ pub struct CurrentApi {
     pub wind_dir: String,
     pub pressure_mb: f64,
     pub humidity: i32,
-    pub feelslike_c: f64,
     pub gust_kph: f64,
 }
 
@@ -195,14 +195,15 @@ impl TryFrom<CurrentApi> for CurrentWeather {
         let temperature = Temperature::new(value.temp_c.round() as i32)
             .with_context(|| format!("Temperature out of range: {}", value.temp_c))?;
 
-        let feels_like = Temperature::new(value.feelslike_c.round() as i32).with_context(|| {
-            format!("Feels like temperature out of range: {}", value.feelslike_c)
-        })?;
-
         let humidity = Humidity::new(value.humidity as f32)
             .with_context(|| format!("Humidity out of range: {}", value.humidity))?;
 
         let wind_speed = parse_wind_speed(value.wind_kph, value.gust_kph)?;
+
+        // Computed locally (BOM Apparent Temperature model) rather than
+        // trusting WeatherAPI.com's own feelslike_c — see
+        // wiki/decisions/compute-feels-like-locally.md.
+        let feels_like = apparent_temperature(&temperature, &humidity, &wind_speed);
 
         let pressure = Pressure::new(value.pressure_mb.round() as u32)
             .with_context(|| format!("Pressure out of range: {}", value.pressure_mb))?;
